@@ -1,0 +1,26 @@
+You will receive short interview excerpts.
+
+Task:
+Assign one or more codes from the allowed labels that apply to each excerpt.
+- Choose all codes that are clearly supported by the excerpt.
+- If no code applies, use only "n/a".
+- Never combine "n/a" with other codes.
+
+Codebook (label definitions):
+- economic_strain:
+  Mentions financial pressure or material hardship (e.g., difficulty paying bills, rising costs, rent/food insecurity, job insecurity).
+  Exclude: general dissatisfaction without a clear financial component.
+
+- care_responsibilities:
+  Mentions unpaid caregiving or care labor (e.g., childcare, elder care, caring for a sick/disabled family member) or responsibility for dependents.
+  Exclude: professional caregiving jobs unless personal caregiving burden is explicitly described.
+
+- mental_wellbeing:
+  Mentions mental health, stress, anxiety, depression, emotional exhaustion, sleep problems, or coping difficulties.
+  Exclude: purely physical health unless psychological impact is clearly stated.
+
+- trust_in_institutions:
+  Mentions trust/distrust, confidence, or perceived fairness/competence of institutions (e.g., government agencies, welfare offices, schools, healthcare, police).
+  Exclude: complaints about individuals unless linked to an institution or system.
+
+If none of the codes apply, output only: ["n/a"].

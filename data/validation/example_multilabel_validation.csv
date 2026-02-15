@@ -1,0 +1,4 @@
+id,Rater1,Rater2
+1,"[""economic_strain"",""care_responsibilities""]","[""economic_strain"",""care_responsibilities""]"
+2,"[""mental_wellbeing""]","[""mental_wellbeing"",""economic_strain""]"
+3,"[""trust_in_institutions"",""economic_strain""]","[""trust_in_institutions""]"

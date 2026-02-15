@@ -1,0 +1,14 @@
+# Secrets
+.env
+
+# Python caches
+__pycache__/
+*.pyc
+
+# OS / editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Outputs (adjust if you want to keep outputs in git)
+outputs/

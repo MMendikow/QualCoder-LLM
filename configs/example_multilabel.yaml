@@ -1,0 +1,34 @@
+# === User-editable parameters ===========================================
+#
+# Output layout: outputs/<project_name>/{logs,results}
+project_name: example_multilabel
+
+# Inputs (relative paths default under data/)
+# prompt_path -> data/prompts/
+# text_dir -> data/text/
+# hand_coded_validation_path -> data/validation/
+# labels_txt_path -> data/labels/
+prompt_path: example_multilabel_prompt.txt
+text_dir: example_multilabel_text
+hand_coded_validation_path: example_multilabel_validation.csv
+labels_txt_path: example_multilabel_labels.txt
+
+# OpenAI model parameters
+llm: gpt-4.1-nano
+temperature: 0.0
+model_role: "You are a careful qualitative coder."
+
+# Number of text JSON files processed in one LLM request
+batch_size: 3
+max_retries: 1
+
+# Task policy
+allow_multilabel: true  # or false
+
+# Optional helpers
+include_evidence_lines: false
+include_explanation: false
+hallucination_check: false
+
+# If set, used as a canonical raw_output.jsonl for evaluation-only runs (no API calls).
+#canonical_raw_path: outputs/example_multilabel/results/run_2026-02-14T09-05-40/raw_output.jsonl

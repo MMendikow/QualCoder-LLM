@@ -1,0 +1,19 @@
+You will receive short interview excerpts.
+
+Task:
+Assign exactly ONE code from the allowed labels that best captures the main theme of the excerpt.
+
+Codebook (label definitions):
+- trust_in_institutions:
+  Mentions trust or distrust toward institutions (e.g., government agencies, welfare offices, schools, healthcare, police).
+  Exclude: complaints about individuals unless linked to an institution or system.
+
+- economic_strain:
+  Mentions financial pressure or material hardship (e.g., difficulty paying bills, rising costs, rent/food insecurity, job insecurity).
+  Exclude: general dissatisfaction without a clear financial component.
+
+- social_support:
+  Mentions help from family, friends, community, or feelings of belonging and being supported.
+  Exclude: purely formal services unless framed as social support.
+
+If none apply, use "n/a".

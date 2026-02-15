@@ -1,0 +1,4 @@
+economic_strain
+care_responsibilities
+mental_wellbeing
+trust_in_institutions
