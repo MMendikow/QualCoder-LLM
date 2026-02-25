@@ -1,0 +1,104 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QualCoder-LLM banner">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#0B1020"/>
+      <stop offset="0.55" stop-color="#111B36"/>
+      <stop offset="1" stop-color="#0B1020"/>
+    </linearGradient>
+
+    <radialGradient id="glow" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse"
+      gradientTransform="translate(864 105) rotate(25) scale(660 270)">
+      <stop offset="0" stop-color="#4F46E5" stop-opacity="0.35"/>
+      <stop offset="0.55" stop-color="#22C55E" stop-opacity="0.18"/>
+      <stop offset="1" stop-color="#000000" stop-opacity="0"/>
+    </radialGradient>
+
+    <linearGradient id="accent" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#60A5FA"/>
+      <stop offset="0.5" stop-color="#A78BFA"/>
+      <stop offset="1" stop-color="#34D399"/>
+    </linearGradient>
+
+    <filter id="shadow" x="-50%" y="-50%" width="200%" height="200%" color-interpolation-filters="sRGB">
+      <feDropShadow dx="0" dy="8" stdDeviation="10" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+
+    <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
+      <path d="M40 0H0V40" fill="none" stroke="#FFFFFF" stroke-opacity="0.06" stroke-width="1"/>
+    </pattern>
+
+    <clipPath id="round">
+      <rect x="0" y="0" width="1200" height="300" rx="26" ry="26"/>
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <rect width="1200" height="300" fill="url(#bg)"/>
+    <rect width="1200" height="300" fill="url(#glow)"/>
+    <rect width="1200" height="300" fill="url(#grid)" opacity="0.8"/>
+
+    <!-- Decorative arcs -->
+    <path d="M-60 240C160 90 330 40 520 20" stroke="url(#accent)" stroke-opacity="0.25" stroke-width="10" fill="none"/>
+    <path d="M740 340C900 250 1020 160 1260 60" stroke="url(#accent)" stroke-opacity="0.22" stroke-width="12" fill="none"/>
+    <path d="M-40 120C140 10 330 -10 560 0" stroke="#FFFFFF" stroke-opacity="0.08" stroke-width="8" fill="none"/>
+
+    <!-- Left text block -->
+    <g transform="translate(80 78)">
+      <text x="0" y="0" fill="#EAF0FF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji','Segoe UI Emoji'"
+            font-size="54" font-weight="800" letter-spacing="-0.7">
+        QualCoder-LLM
+      </text>
+      <text x="2" y="46" fill="#B8C3E6" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+            font-size="20" font-weight="500" opacity="0.95">
+        LLM-assisted qualitative coding of text
+      </text>
+
+      <!-- Pill tags -->
+      <g transform="translate(0 76)">
+        <g filter="url(#shadow)">
+          <rect x="0" y="0" width="126" height="34" rx="17" fill="#0F172A" stroke="#FFFFFF" stroke-opacity="0.10"/>
+          <text x="16" y="23" fill="#DDE7FF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                font-size="14" font-weight="600">Evaluation</text>
+        </g>
+        <g transform="translate(140 0)" filter="url(#shadow)">
+          <rect x="0" y="0" width="186" height="34" rx="17" fill="#0F172A" stroke="#FFFFFF" stroke-opacity="0.10"/>
+          <text x="16" y="23" fill="#DDE7FF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                font-size="14" font-weight="600">Experiment Tracking</text>
+        </g>
+        <g transform="translate(340 0)" filter="url(#shadow)">
+          <rect x="0" y="0" width="128" height="34" rx="17" fill="#0F172A" stroke="#FFFFFF" stroke-opacity="0.10"/>
+          <text x="16" y="23" fill="#DDE7FF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
+                font-size="14" font-weight="600">LLM-Checks</text>
+        </g>
+      </g>
+    </g>
+
+    <!-- Right-side icon: document + brackets (no real words inside drawing) -->
+    <g transform="translate(790 54)" filter="url(#shadow)">
+      <rect x="0" y="0" width="330" height="210" rx="24" fill="#0B1226" stroke="#FFFFFF" stroke-opacity="0.10"/>
+      <rect x="10" y="10" width="310" height="190" rx="20" fill="none" stroke="url(#accent)" stroke-opacity="0.35"/>
+
+      <g transform="translate(76 34)">
+        <rect x="0" y="0" width="178" height="150" rx="18" fill="#0F172A" stroke="#FFFFFF" stroke-opacity="0.12"/>
+        <path d="M136 0H178V42" fill="#111B36"/>
+        <path d="M136 0H178V42" fill="none" stroke="#FFFFFF" stroke-opacity="0.10"/>
+
+        <!-- pseudo-text (abstract strokes only) -->
+        <rect x="22" y="30" width="120" height="10" rx="5" fill="#FFFFFF" opacity="0.16"/>
+        <rect x="22" y="52" width="104" height="10" rx="5" fill="#FFFFFF" opacity="0.13"/>
+        <rect x="22" y="74" width="132" height="10" rx="5" fill="#FFFFFF" opacity="0.11"/>
+        <rect x="22" y="96" width="92" height="10" rx="5" fill="#FFFFFF" opacity="0.12"/>
+
+        <rect x="22" y="120" width="56" height="8" rx="4" fill="#FFFFFF" opacity="0.10"/>
+        <rect x="84" y="120" width="70" height="8" rx="4" fill="#FFFFFF" opacity="0.09"/>
+        <rect x="22" y="134" width="46" height="8" rx="4" fill="#FFFFFF" opacity="0.09"/>
+        <rect x="74" y="134" width="80" height="8" rx="4" fill="#FFFFFF" opacity="0.08"/>
+
+        <!-- brackets -->
+        <path d="M-20 40C-38 40-38 40-38 58V92C-38 110-38 110-20 110" stroke="#60A5FA" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+        <path d="M198 40C216 40 216 40 216 58V92C216 110 216 110 198 110" stroke="#34D399" stroke-width="7" stroke-linecap="round" opacity="0.9"/>
+      </g>
+    </g>
+  </g>
+</svg>
