@@ -565,7 +565,6 @@ The pipeline reads `raw_output.jsonl` and re-evaluates it. This is useful for:
 
 ## Metrics (with formulas)
 
-GitHub can render LaTeX-style mathematics directly in `README.md`. Use inline math with `$...$` and block math with `$$...$$` or a fenced `math` block (recommended for readability).
 
 ### Single-label (ground-truth mode)
 
