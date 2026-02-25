@@ -308,7 +308,11 @@ def _maybe_run_hallucination_check(
     run_dir: Path,
     logger: RunLogger,
 ) -> None:
-    if (not is_icr) and cfg.hallucination_check:
+    # Hallucination auditing is orthogonal to the evaluation regime. As long as the
+    # run requested `evidence_lines` in the model output (and `hallucination_check`
+    # is enabled), we can verify that quoted evidence appears in the source text
+    # for both gold-evaluation and ICR runs.
+    if cfg.hallucination_check:
         hallu_log = run_dir / "hallucinations.log"
         hallu_count = check_hallucinations(predictions, papers, hallu_log)
         logger.info(f"Hallucinations (count): {hallu_count}  [details: {hallu_log.name}]")
