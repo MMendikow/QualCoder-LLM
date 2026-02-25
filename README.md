@@ -14,6 +14,26 @@ QualCoder-LLM is a **ready-to-use** pipeline for **LLM-assisted qualitative codi
 
 Everything is controlled via a **single flat YAML configuration file**.
 
+
+## Table of contents
+
+- [Repository layout](#repository-layout)
+- [What the pipeline does](#what-the-pipeline-does)
+- [Requirements](#requirements)
+- [Installation](#installation)
+- [Quick start (included examples)](#quick-start-included-examples)
+- [Preparing your inputs](#preparing-your-inputs)
+- [Validation file (CSV)](#4-validation-file-csv)
+- [Configuration (YAML)](#configuration-yaml)
+- [Path resolution](#path-resolution)
+- [Running the pipeline](#running-the-pipeline)
+- [Outputs](#outputs)
+- [Optional features](#optional-features)
+- [Metrics (with formulas)](#metrics-with-formulas)
+- [Troubleshooting](#troubleshooting)
+- [Minimal checklist (recommended workflow)](#minimal-checklist-recommended-workflow)
+
+
 ---
 
 ## Repository layout
@@ -545,6 +565,7 @@ The pipeline reads `raw_output.jsonl` and re-evaluates it. This is useful for:
 
 ## Metrics (with formulas)
 
+GitHub can render LaTeX-style mathematics directly in `README.md`. Use inline math with `$...$` and block math with `$$...$$` or a fenced `math` block (recommended for readability).
 
 ### Single-label (ground-truth mode)
 
