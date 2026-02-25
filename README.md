@@ -554,7 +554,7 @@ Let there be $N$ items and a label set $\mathcal{L}$. Each item has exactly one 
 **Accuracy**
 
 ```math id="7e50ds"
-	ext{Accuracy}=rac{1}{N}\sum_{i=1}^{N}\mathbf{1}[y_i=\hat{y}_i]
+\text{Accuracy}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}[y_i=\hat{y}_i]
 ```
 
 For each label $\ell\in\mathcal{L}$, define:
@@ -568,22 +568,22 @@ eq\ell$
 **Precision / Recall / F1**
 
 ```math id="o3tkd6"
-P_{\ell}=rac{TP_{\ell}}{TP_{\ell}+FP_{\ell}},\quad
-R_{\ell}=rac{TP_{\ell}}{TP_{\ell}+FN_{\ell}},\quad
-F1_{\ell}=rac{2P_{\ell}R_{\ell}}{P_{\ell}+R_{\ell}}
+P_{\ell}=\frac{TP_{\ell}}{TP_{\ell}+FP_{\ell}},\quad
+R_{\ell}=\frac{TP_{\ell}}{TP_{\ell}+FN_{\ell}},\quad
+F1_{\ell}=\frac{2P_{\ell}R_{\ell}}{P_{\ell}+R_{\ell}}
 ```
 
 **Macro-F1**
 
 ```math id="b2k2nh"
-	ext{Macro-F1}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} F1_{\ell}
+\text{Macro-F1}=\frac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} F1_{\ell}
 ```
 
 **Weighted-F1** (support-weighted by ground-truth frequency)
 
 ```math id="9jti3h"
-	ext{Weighted-F1}=\sum_{\ell\in\mathcal{L}}rac{	ext{support}_{\ell}}{N}\,F1_{\ell},
-\qquad 	ext{support}_{\ell}=TP_{\ell}+FN_{\ell}
+\text{Weighted-F1}=\sum_{\ell\in\mathcal{L}}\frac{\text{support}_{\ell}}{N}\,F1_{\ell},
+\qquad \text{support}_{\ell}=TP_{\ell}+FN_{\ell}
 ```
 
 ---
@@ -595,7 +595,7 @@ Each item $i$ has a ground-truth label set $G_i\subseteq\mathcal{L}$ and a predi
 **Subset accuracy** (exact set match)
 
 ```math id="whgqmq"
-	ext{SubsetAcc}=rac{1}{N}\sum_{i=1}^{N}\mathbf{1}[G_i=\hat{G}_i]
+\text{SubsetAcc}=\frac{1}{N}\sum_{i=1}^{N}\mathbf{1}[G_i=\hat{G}_i]
 ```
 
 Define micro counts aggregated across items:
@@ -609,17 +609,17 @@ FN=\sum_{i=1}^{N}|G_i\setminus \hat{G}_i|
 **Micro precision / recall / F1**
 
 ```math id="qewxni"
-P_{	ext{micro}}=rac{TP}{TP+FP},\quad
-R_{	ext{micro}}=rac{TP}{TP+FN},\quad
-F1_{	ext{micro}}=rac{2P_{	ext{micro}}R_{	ext{micro}}}{P_{	ext{micro}}+R_{	ext{micro}}}
+P_{\text{micro}}=\frac{TP}{TP+FP},\quad
+R_{\text{micro}}=\frac{TP}{TP+FN},\quad
+F1_{\text{micro}}=\frac{2P_{\text{micro}}R_{\text{micro}}}{P_{\text{micro}}+R_{\text{micro}}}
 ```
 
 For macro metrics, compute per-label $TP_{\ell},FP_{\ell},FN_{\ell}$ by treating each label as a binary decision (“present” vs “absent”), then:
 
 ```math id="gz1ldz"
-P_{	ext{macro}}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} P_{\ell},\quad
-R_{	ext{macro}}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} R_{\ell},\quad
-F1_{	ext{macro}}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} F1_{\ell}
+P_{\text{macro}}=\frac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} P_{\ell},\quad
+R_{\text{macro}}=\frac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} R_{\ell},\quad
+F1_{\text{macro}}=\frac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} F1_{\ell}
 ```
 
 ---
@@ -628,18 +628,18 @@ F1_{	ext{macro}}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}} F1_{\ell}
 
 Krippendorff’s alpha is reported in several variants. The general form is:
 
-```math id="a7zywx"
-lpha = 1 - rac{D_o}{D_e}
-```
+$$
+\alpha = 1 - \frac{D_o}{D_e}
+$$
 
 - $D_o$: observed disagreement  
 - $D_e$: expected disagreement by chance  
 
 Interpretation:
 
-- $lpha=1$: perfect agreement  
-- $lpha=0$: chance-level agreement  
-- $lpha<0$: systematic disagreement  
+- $\alpha=1$: perfect agreement  
+- $\alpha=0$: chance-level agreement  
+- $\alpha<0$: systematic disagreement  
 
 #### 1) Atomic nominal α (exact set token match)
 
@@ -651,7 +651,7 @@ Each coder’s label set is converted into a canonical token:
 
 Example: `["b","a","a"] → "a|b"`
 
-Nominal $lpha$ then follows the standard observed/expected disagreement formulation using category counts per item and global marginals.
+Nominal $\alpha$ then follows the standard observed/expected disagreement formulation using category counts per item and global marginals.
 
 #### 2) Binary-incidence α (per-label presence/absence)
 
@@ -661,12 +661,12 @@ For each label $\ell$, each coder decision is converted into a binary value:
 - 0 if $\ell$ is absent
 - missing remains missing
 
-Compute $lpha_{\ell}$ per label and report:
+Compute $\alpha_{\ell}$ per label and report:
 
 **Macro binary-incidence α**
 
 ```math id="zr7qtk"
-lpha_{	ext{macro}}=rac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}}lpha_{\ell}
+\alpha_{\text{macro}}=\frac{1}{|\mathcal{L}|}\sum_{\ell\in\mathcal{L}}\alpha_{\ell}
 ```
 
 **Prevalence-weighted binary-incidence α**
@@ -674,7 +674,7 @@ Compute $lpha_{\ell}$ per label and report:
 Let $w_{\ell}$ be the number of positive assignments for label $\ell$ across all items and coders:
 
 ```math id="ps8wol"
-lpha_{	ext{pw}}=rac{\sum_{\ell\in\mathcal{L}} w_{\ell}\,lpha_{\ell}}{\sum_{\ell\in\mathcal{L}} w_{\ell}}
+\alpha_{\text{pw}}=\frac{\sum_{\ell\in\mathcal{L}} w_{\ell}\,\alpha_{\ell}}{\sum_{\ell\in\mathcal{L}} w_{\ell}}
 ```
 
 #### 3) Jaccard set-based α (partial overlap)
@@ -682,10 +682,10 @@ Let $w_{\ell}$ be the number of positive assignments for label $\ell$ across all
 This variant treats decisions as sets and uses Jaccard distance:
 
 ```math id="s0cgab"
-\delta(S,T)=1-rac{|S\cap T|}{|S\cup T|}
+\delta(S,T)=1-\frac{|S\cap T|}{|S\cup T|}
 ```
 
-Krippendorff’s $lpha$ is computed using the general metric form with $\delta$ for observed and expected disagreement over coder pairs.
+Krippendorff’s $\alpha$ is computed using the general metric form with $\delta$ for observed and expected disagreement over coder pairs.
 
 ---
 
