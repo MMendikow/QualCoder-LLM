@@ -20,7 +20,7 @@ from .loader import load_hand_coded_validation, load_papers, load_prompt
 from .logger import RunLogger
 from .llm_client import LLMClient
 from .hallu_check import check_hallucinations
-from .krippendorf_helper import compute_icr_alpha
+from .krippendorf_helper import build_llm_coder, compute_icr_alpha
 from .utils import ensure_id_column
 
 
@@ -132,14 +132,19 @@ def _prepare_run_paths(cfg: PipelineConfig, ts: str) -> Tuple[Path, Path]:
     return run_dir, canonical_raw_path
 
 
-def _load_inputs(cfg: PipelineConfig, *, is_icr: bool) -> Tuple[List[JSON], str, pd.DataFrame | None]:
+def _load_inputs(
+    cfg: PipelineConfig,
+    *,
+    validation_mode: bool,
+    is_icr: bool,
+) -> Tuple[List[JSON], str, pd.DataFrame | None]:
     # Inputs
     papers = load_papers(cfg.text_dir)
     prompt_template = load_prompt(cfg.prompt_path)
 
-    # Gold labels are only needed in gold mode
+    # Gold labels are only needed in gold mode when validation is enabled
     gold_df = None
-    if not is_icr:
+    if validation_mode and not is_icr:
         gold_df = load_hand_coded_validation(
             cfg.hand_coded_validation_path,
             cfg.allow_multilabel,
@@ -163,11 +168,12 @@ def _classify_and_persist_predictions(
     cfg: PipelineConfig,
     run_dir: Path,
     canonical_raw_path: Path,
-    logger: RunLogger,
+    logger: RunLogger | None,
     client: LLMClient,
     papers: List[JSON],
     prompt_template: str,
     ts: str,
+    capture_raw_input: bool = True,
 ) -> List[JSON]:
     # NORMAL RUN: classify in batches, with retries, and write canonical incrementally
     predictions: List[JSON] = []
@@ -182,10 +188,11 @@ def _classify_and_persist_predictions(
     with open(canonical_raw_path, "w", encoding="utf-8") as f_out:
         pass
 
-    raw_input_path = run_dir / "raw_input.txt"
-    with open(raw_input_path, "w", encoding="utf-8") as f_in:
-        f_in.write(f"RAW INPUT PROMPTS — run={ts}\n")
-        f_in.write("=" * 80 + "\n\n")
+    raw_input_path = run_dir / "raw_input.txt" if capture_raw_input else None
+    if raw_input_path is not None:
+        with open(raw_input_path, "w", encoding="utf-8") as f_in:
+            f_in.write(f"RAW INPUT PROMPTS — run={ts}\n")
+            f_in.write("=" * 80 + "\n\n")
 
     for batch in _chunks(papers, cfg.batch_size):
 
@@ -207,11 +214,12 @@ def _classify_and_persist_predictions(
                     include_explanation=cfg.include_explanation,
                 )
 
-                with open(raw_input_path, "a", encoding="utf-8") as f_in:
-                    f_in.write(
-                        f"===== BATCH PROMPT (SUCCESS) | attempt={attempt + 1}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
-                    f_in.write(last_full_prompt)
-                    f_in.write("\n===== END BATCH PROMPT =====\n\n")
+                if raw_input_path is not None:
+                    with open(raw_input_path, "a", encoding="utf-8") as f_in:
+                        f_in.write(
+                            f"===== BATCH PROMPT (SUCCESS) | attempt={attempt + 1}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
+                        f_in.write(last_full_prompt)
+                        f_in.write("\n===== END BATCH PROMPT =====\n\n")
 
                 break  # success
 
@@ -221,29 +229,31 @@ def _classify_and_persist_predictions(
                 attempt += 1
 
                 # Log + console warning (preserve existing surface behavior)
-                logger.info(
-                    f"Batch failed (attempt {attempt}/{cfg.max_retries + 1}) "
-                    f"for ids={batch_ids}. Error: {e} [category={category}, retryable={retryable}]"
-                )
+                if logger is not None:
+                    logger.info(
+                        f"Batch failed (attempt {attempt}/{cfg.max_retries + 1}) "
+                        f"for ids={batch_ids}. Error: {e} [category={category}, retryable={retryable}]"
+                    )
 
                 maybe_prompt = getattr(client, "_last_full_prompt", None)
-                if maybe_prompt:
-                    with open(raw_input_path, "a", encoding="utf-8") as f_in:
-                        f_in.write(
-                            f"===== BATCH PROMPT (FAIL) | attempt={attempt}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
-                        f_in.write(maybe_prompt)
-                        f_in.write("\n----- ERROR -----\n")
-                        f_in.write(str(e) + "\n")
-                        f_in.write("===== END BATCH PROMPT =====\n\n")
-                else:
-                    # still write a failure block even if no prompt was captured
-                    with open(raw_input_path, "a", encoding="utf-8") as f_in:
-                        f_in.write(
-                            f"===== BATCH PROMPT (FAIL) | attempt={attempt}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
-                        f_in.write("<NO PROMPT CAPTURED>\n")
-                        f_in.write("\n----- ERROR -----\n")
-                        f_in.write(str(e) + "\n")
-                        f_in.write("===== END BATCH PROMPT =====\n\n")
+                if raw_input_path is not None:
+                    if maybe_prompt:
+                        with open(raw_input_path, "a", encoding="utf-8") as f_in:
+                            f_in.write(
+                                f"===== BATCH PROMPT (FAIL) | attempt={attempt}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
+                            f_in.write(maybe_prompt)
+                            f_in.write("\n----- ERROR -----\n")
+                            f_in.write(str(e) + "\n")
+                            f_in.write("===== END BATCH PROMPT =====\n\n")
+                    else:
+                        # still write a failure block even if no prompt was captured
+                        with open(raw_input_path, "a", encoding="utf-8") as f_in:
+                            f_in.write(
+                                f"===== BATCH PROMPT (FAIL) | attempt={attempt}/{cfg.max_retries + 1} | ids={batch_ids} =====\n")
+                            f_in.write("<NO PROMPT CAPTURED>\n")
+                            f_in.write("\n----- ERROR -----\n")
+                            f_in.write(str(e) + "\n")
+                            f_in.write("===== END BATCH PROMPT =====\n\n")
 
                 print(
                     f"[WARN] Batch failed (attempt {attempt}/{cfg.max_retries + 1}) "
@@ -253,7 +263,7 @@ def _classify_and_persist_predictions(
                 # Stop immediately on non-retryable errors, or once retries are exhausted.
                 if (not retryable) or (attempt > cfg.max_retries):
 
-                    if not retryable:
+                    if not retryable and logger is not None:
                         logger.info(
                             f"Non-retryable error encountered for ids={batch_ids}; aborting without further retries. "
                             f"[category={category}]"
@@ -266,11 +276,12 @@ def _classify_and_persist_predictions(
                             f"Saved partial predictions for {saved_count} items; "
                             f"next failing batch starts at id={batch_ids[0] if batch_ids else '<unknown>'}."
                         )
-                        logger.info(
-                            f"Giving up after {cfg.max_retries + 1} attempts. "
-                            f"Saved partial predictions for {saved_count} items; "
-                            f"next failing batch starts at id={batch_ids[0] if batch_ids else '<unknown>'}."
-                        )
+                        if logger is not None:
+                            logger.info(
+                                f"Giving up after {cfg.max_retries + 1} attempts. "
+                                f"Saved partial predictions for {saved_count} items; "
+                                f"next failing batch starts at id={batch_ids[0] if batch_ids else '<unknown>'}."
+                            )
 
                     # Print the last prompt used (for debugging)
                     if last_full_prompt:
@@ -297,6 +308,25 @@ def _classify_and_persist_predictions(
 
     print(f"[main] Wrote canonical raw file: {canonical_raw_path.name}")
     return predictions
+
+
+def _write_llm_classification_csv(
+    *,
+    predictions: List[JSON],
+    run_dir: Path,
+    labels: List[str],
+) -> Path:
+    llm_csv_path = run_dir / "LLM_classification.csv"
+
+    if predictions:
+        llm_series = build_llm_coder(pd.DataFrame(predictions), labels)
+        llm_df = llm_series.reset_index()
+        llm_df.columns = ["id", "LLM"]
+    else:
+        llm_df = pd.DataFrame(columns=["id", "LLM"])
+
+    llm_df.to_csv(llm_csv_path, index=False)
+    return llm_csv_path
 
 
 def _maybe_run_hallucination_check(
@@ -572,14 +602,20 @@ def main() -> None:
     ts = datetime.now().strftime("%Y-%m-%dT%H-%M-%S")
 
     # Decide evaluation mode from the hand-coded CSV shape (auto-ICR detection)
-    is_icr = _detect_icr_mode(cfg.hand_coded_validation_path)
+    is_icr = cfg.validation_mode and _detect_icr_mode(cfg.hand_coded_validation_path)
 
     run_dir, canonical_raw_path = _prepare_run_paths(cfg, ts)
 
-    logger = RunLogger(cfg.logs_dir, ts)
-    logger.write_config(asdict(cfg))
+    logger = None
+    if cfg.validation_mode:
+        logger = RunLogger(cfg.logs_dir, ts)
+        logger.write_config(asdict(cfg))
 
-    papers, prompt_template, gold_df = _load_inputs(cfg, is_icr=is_icr)
+    papers, prompt_template, gold_df = _load_inputs(
+        cfg,
+        validation_mode=cfg.validation_mode,
+        is_icr=is_icr,
+    )
 
     client = LLMClient(cfg.llm, cfg.temperature, cfg.model_role)
 
@@ -597,7 +633,23 @@ def main() -> None:
             papers=papers,
             prompt_template=prompt_template,
             ts=ts,
+            capture_raw_input=cfg.validation_mode,
         )
+
+    llm_csv_path = _write_llm_classification_csv(
+        predictions=predictions,
+        run_dir=run_dir,
+        labels=cfg.labels,
+    )
+
+    if not cfg.validation_mode:
+        print(
+            f"[main] Run completed – predictions written to {canonical_raw_path} "
+            f"and {llm_csv_path}"
+        )
+        return
+
+    assert logger is not None
 
     _maybe_run_hallucination_check(
         cfg=cfg,

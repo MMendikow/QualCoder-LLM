@@ -7,8 +7,9 @@ QualCoder-LLM is a **ready-to-use** pipeline for **LLM-assisted qualitative codi
 * **Single-label** and **multi-label** coding.
 * **Automated evaluation**, including:
   * **Ground-truth evaluation** against an expert-labeled validation dataset using standard classification metrics (e.g., accuracy and F1 variants).
-  * **Intercoder reliability (ICR)** computing **Krippendorff’s α** treating the LLM as an additional coder alongside one or more human coders. 
-* **Experiment tracking via `run_history.csv`**, which records key configuration settings and headline metrics for every run—making it straightforward to compare prompts, models, label sets, and options over time.
+  * **Intercoder reliability (ICR)** computing **Krippendorff’s α** treating the LLM as an additional coder alongside one or more human coders.
+* **Prediction-only mode**: run the pipeline without validation data to generate LLM classifications only, with no evaluation, no logs, and no `run_history.csv` entry.
+* **Experiment tracking via `run_history.csv`** for validation-enabled runs, which records key configuration settings and headline metrics—making it straightforward to compare prompts, models, label sets, and options over time.
 * Optional **evidence lines** (verbatim quotes from the source text supporting the assigned label(s)) with a **hallucination audit** that flags evidence lines that differ from the original input text.
 * **Robust execution with configurable retries**: single failed LLM coding calls are retried up to a user-defined limit, while successful calls are saved so completed work is never lost.
 
@@ -57,25 +58,48 @@ run.py            # convenience entrypoint (wraps the main pipeline)
 
 ## What the pipeline does
 
-At a high level, the pipeline performs four steps:
+At a high level, the pipeline has two execution paths.
 
-1. Load inputs  
-   - label universe from a `.txt` file (list of the allowed labels for a task)  
-   - prompt template from a `.txt` file (instruction for the LLM)  
-   - text items from a directory of `.json` files (documents you want to classify)  
+### Validation mode enabled
+
+1. Load inputs
+   - label universe from a `.txt` file (list of the allowed labels for a task)
+   - prompt template from a `.txt` file (instruction for the LLM)
+   - text items from a directory of `.json` files (documents you want to classify)
    - validation data from a `.csv` file (human coders results or expert classification)
 
-2. Call the LLM to code items (unless you run in evaluation-only mode)  
-   - batching is controlled by `batch_size` (how many papers should be given at a single LLM call)  
-   - strict output format is enforced (JSON array with id and labels, to ensure save interpretation of Llm Coding results)
+2. Call the LLM to code items (unless you run in evaluation-only mode)
+   - batching is controlled by `batch_size` (how many papers should be given at a single LLM call)
+   - strict output format is enforced (JSON array with id and labels, to ensure safe interpretation of LLM coding results)
 
-3. Evaluate results  
-   - Groundtruth mode if the validation CSV contains a single `labels` column  
+3. Evaluate results
+   - Ground-truth mode if the validation CSV contains a single `labels` column
    - ICR mode otherwise (≥1 human rater columns)
 
-4. Write outputs  
-   - per-run artifacts into (all the information , raw data and the calculated evaluation metrics can be found here) `outputs/<project_name>/results/run_<timestamp>/...`  
-   - a cumulative `run_history.csv` for cross-run comparison (for every new started project there will be a new run history started)
+4. Write outputs
+   - per-run artifacts into `outputs/<project_name>/results/run_<timestamp>/...`
+   - a cumulative `run_history.csv` for cross-run comparison
+   - logs and computed metrics for the run
+
+### Validation mode disabled
+
+1. Load inputs
+   - label universe from a `.txt` file
+   - prompt template from a `.txt` file
+   - text items from a directory of `.json` files
+
+2. Call the LLM to code items
+   - batching is controlled by `batch_size`
+   - strict output format is enforced (JSON array with id and labels)
+
+3. Write outputs
+   - `raw_output.jsonl`
+   - `LLM_classification.csv`
+
+4. Stop
+   - no evaluation is performed
+   - no logs are written
+   - no `run_history.csv` row is appended
 
 ---
 
@@ -128,6 +152,8 @@ or:
 ```bash id="2ytrlk"
 python run.py configs/example_multilabel.yaml
 ```
+
+Both bundled examples are **validation-enabled** examples. To run the pipeline in prediction-only mode, set `validation_mode: false` in your YAML config.
 
 ---
 
@@ -270,6 +296,8 @@ A CSV (“comma-separated values”) file is a plain-text table format. You can 
 - Excel / LibreOffice / Numbers → Save As / Export → CSV
 - Google Sheets → File → Download → Comma-separated values (.csv)
 
+A validation CSV is required only when `validation_mode: true`. If `validation_mode: false`, no validation CSV is needed and no evaluation is performed.
+
 Export advice (recommended):
 - Prefer comma-delimited CSV (,) because the pipeline loads CSVs using standard defaults.
 - Prefer UTF-8 encoding.
@@ -338,7 +366,7 @@ Key points:
 
 ### How evaluation mode is inferred
 
-This rule is central:
+This rule applies only when `validation_mode: true`:
 - If your validation CSV contains a `labels` column → ground-truth evaluation.
 - Otherwise, if it contains ≥ 1 rater columns besides `id` → ICR evaluation.
 
@@ -352,45 +380,47 @@ The pipeline is configured through a single YAML file with a strict schema (only
 
 ### Required keys
 
-- `project_name`  
+- `project_name`
   Name of the run group; outputs are written under `outputs/<project_name>/{logs,results}`.
 
 **Inputs**
-- `prompt_path`  
+- `prompt_path`
   Path to the prompt template (.txt). If given as a simple relative filename, it is resolved under `data/prompts/`.
-- `text_dir`  
+- `text_dir`
   Directory containing input items (.json files). If relative, it is resolved under `data/text/`.
-- `hand_coded_validation_path`  
-  Validation CSV path (ground-truth or rater-style). If relative, it is resolved under `data/validation/`.
-- `labels_txt_path`  
+- `labels_txt_path`
   Label universe file (.txt, one label per line). If relative, it is resolved under `data/labels/`.
+- `hand_coded_validation_path`
+  Validation CSV path (ground-truth or rater-style). If relative, it is resolved under `data/validation/`. Required when `validation_mode: true`; optional otherwise.
 
 **Model / runtime**
-- `llm`  
+- `llm`
   The OpenAI model identifier used for coding.
-- `batch_size`  
+- `batch_size`
   Number of items included in a single LLM call.
-- `max_retries`  
+- `max_retries`
   Maximum number of retries for a failed batch call (robust execution).
 
 **Task policy**
-- `allow_multilabel`  
+- `validation_mode`
+  `true` = run the validation/evaluation workflow; `false` = run prediction-only mode.
+- `allow_multilabel`
   `true` = multiple labels per item allowed; `false` = exactly one label per item (enforced in parsing and evaluation).
 
 ### Optional keys
 
-- `temperature` (default: 0.0)  
+- `temperature` (default: 0.0)
   Sampling temperature for the model call.
-- `model_role` (default: "")  
+- `model_role` (default: "")
   Optional system message (role) prepended to the chat.
-- `include_evidence_lines` (default: false)  
+- `include_evidence_lines` (default: false)
   Requests evidence_lines in the model output (verbatim quotes supporting the assigned label(s)).
-- `include_explanation` (default: false)  
+- `include_explanation` (default: false)
   Requests a brief explanation field in the model output.
-- `hallucination_check` (default: false)  
-  Runs an evidence-line audit that flags quoted evidence not found in the original text.
-- `canonical_raw_path` (default: null)  
-  Evaluation-only mode: skips LLM calls and instead reads predictions from an existing canonical JSONL file (typically a previous run’s raw_output.jsonl).
+- `hallucination_check` (default: false)
+  Runs an evidence-line audit that flags quoted evidence not found in the original text. This option is supported only when `validation_mode: true`.
+- `canonical_raw_path` (default: null)
+  Evaluation-only mode: skips LLM calls and instead reads predictions from an existing canonical JSONL file (typically a previous run’s raw_output.jsonl). This option is supported only when `validation_mode: true`.
 
 Example config:
 
@@ -412,6 +442,7 @@ batch_size: 5
 max_retries: 2
 
 # Task policy
+validation_mode: true
 allow_multilabel: true
 
 # Optional output fields / checks
@@ -420,7 +451,36 @@ include_explanation: false
 hallucination_check: false
 
 # Evaluation-only mode (uncomment to reuse an existing run’s predictions)
+# Only supported when validation_mode: true
 # canonical_raw_path: outputs/my_run/results/run_YYYY-MM-DDTHH-MM-SS/raw_output.jsonl
+```
+
+Prediction-only example:
+
+```yaml id="1h0j48"
+project_name: my_prediction_run
+
+# Inputs
+prompt_path: my_prompt.txt
+text_dir: my_texts
+labels_txt_path: my_labels.txt
+
+# Model / runtime
+llm: gpt-4.1-nano
+temperature: 0.0
+model_role: "You are a careful qualitative coder."
+
+batch_size: 5
+max_retries: 2
+
+# Task policy
+validation_mode: false
+allow_multilabel: true
+
+# Optional output fields / checks
+include_evidence_lines: false
+include_explanation: false
+hallucination_check: false
 ```
 
 ---
@@ -465,13 +525,19 @@ Each run writes to:
 
 `outputs/<project_name>/results/run_<timestamp>/`
 
+### When `validation_mode: true`
+
 Typical files include:
 
-- **`raw_output.jsonl`** — canonical predictions (JSONL; one JSON object per line), e.g.  
-  `{"id":"001","labels":["economic_strain"]}`  
+- **`raw_output.jsonl`** — canonical predictions (JSONL; one JSON object per line), e.g.
+  `{"id":"001","labels":["economic_strain"]}`
   If enabled, items may additionally include:
   - `evidence_lines: [...]`
   - `explanation: "..."`
+
+- **`LLM_classification.csv`** — one row per item with the columns:
+  - `id`
+  - `LLM`
 
 - **`raw_input.txt`** — the exact prompt text sent to the model *per batch*, including your prompt template, the appended JSON contract, and the batch payload. This is the primary audit/debug artifact.
 
@@ -479,19 +545,15 @@ Typical files include:
 
 - **`hallucinations.log`** — written only when `hallucination_check: true`; reports evidence lines that do not occur in the original input text.
 
-### Logs
-
 Logs (including the active configuration and automatically computed metrics) are written to:
 
 `outputs/<project_name>/logs/<timestamp>.log`
-
-### Run history
 
 `run_history.csv` is stored at:
 
 `outputs/<project_name>/results/run_history.csv`
 
-It appends **one row per run**, containing:
+It appends **one row per validation-enabled run**, containing:
 
 - key overall metrics (ground-truth classification metrics or ICR Krippendorff’s α metrics)
 - the most relevant configuration parameters (e.g., model, role, batch size, evidence/explanation flags)
@@ -499,10 +561,19 @@ It appends **one row per run**, containing:
 
 The overview enabled by Run History enables a practical “experiment loop”:
 
-- adjust prompt/codebook → rerun → compare results  
-- swap models → rerun → compare results  
-- change label sets → rerun → compare results  
-- enable/disable evidence and hallucination checks → rerun → compare results  
+- adjust prompt/codebook → rerun → compare results
+- swap models → rerun → compare results
+- change label sets → rerun → compare results
+- enable/disable evidence and hallucination checks → rerun → compare results
+
+### When `validation_mode: false`
+
+Outputs are limited to:
+
+- **`raw_output.jsonl`** — canonical predictions (JSONL; one JSON object per line)
+- **`LLM_classification.csv`** — one row per item with columns `id` and `LLM`
+
+No logs, no metrics, no crosstab, no hallucination audit, and no `run_history.csv` row are written in prediction-only mode.
 
 ---
 
@@ -543,6 +614,8 @@ Mismatches are counted and written to `hallucinations.log`. This check does not 
 
 ### Evaluation-only mode (no API calls)
 
+This mode is available only when `validation_mode: true`.
+
 If you already have predictions and want to recompute metrics:
 
 ```yaml id="9p4ulf"
@@ -560,6 +633,22 @@ The pipeline reads `raw_output.jsonl` and re-evaluates it. This is useful for:
 - re-running ICR calculations
 - re-computing metrics after modifying the label universe
 - regenerating artifacts like the single-label crosstab
+
+### Prediction-only mode
+
+Set:
+
+```yaml id="rq5wyc"
+validation_mode: false
+```
+
+In this mode, the pipeline:
+- classifies all text items with the LLM
+- writes `raw_output.jsonl`
+- writes `LLM_classification.csv`
+- performs no evaluation
+- writes no logs
+- appends no `run_history.csv` row
 
 ---
 
@@ -716,6 +805,18 @@ Krippendorff’s $\alpha$ is computed using the general metric form with $\delta
 - **The run is evaluated as ground-truth, but you expected ICR**
   - Remove or rename the `labels` column and use one or more rater columns instead.
 
+- **The pipeline says `hand_coded_validation_path` is required**
+  - This happens when `validation_mode: true`. Add the validation CSV path or set `validation_mode: false`.
+
+- **`canonical_raw_path` cannot be used**
+  - This option is supported only when `validation_mode: true`.
+
+- **`hallucination_check` cannot be enabled**
+  - This option is supported only when `validation_mode: true`.
+
+- **Why was no log file written?**
+  - In prediction-only mode (`validation_mode: false`), the pipeline intentionally skips logs and evaluation artifacts.
+
 - **The CSV loads as a single column**
   - Your CSV is likely semicolon-delimited (`;`). Re-export as a comma-delimited CSV (`,`), ideally with UTF-8 encoding.
 
@@ -732,10 +833,21 @@ Krippendorff’s $\alpha$ is computed using the general metric form with $\delta
 
 ## Minimal checklist (recommended workflow)
 
+### Validation-enabled workflow
+
 1. Define labels in `data/labels/`.
 2. Write a prompt in `data/prompts/`.
 3. Add text JSON files in `data/text/`.
 4. Add a validation CSV in `data/validation/` (ground-truth or rater-style).
-5. Create a YAML config in `configs/`.
+5. Create a YAML config in `configs/` with `validation_mode: true`.
 6. Run: `python run.py configs/<your_config>.yaml`
 7. Inspect `outputs/<project_name>/logs/` and `outputs/<project_name>/results/`.
+
+### Prediction-only workflow
+
+1. Define labels in `data/labels/`.
+2. Write a prompt in `data/prompts/`.
+3. Add text JSON files in `data/text/`.
+4. Create a YAML config in `configs/` with `validation_mode: false`.
+5. Run: `python run.py configs/<your_config>.yaml`
+6. Inspect `raw_output.jsonl` and `LLM_classification.csv` in `outputs/<project_name>/results/run_<timestamp>/`.

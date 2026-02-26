@@ -6,7 +6,7 @@ project_name: example_multilabel
 # Inputs (relative paths default under data/)
 # prompt_path -> data/prompts/
 # text_dir -> data/text/
-# hand_coded_validation_path -> data/validation/
+# hand_coded_validation_path -> data/validation/   (required when validation_mode: true)
 # labels_txt_path -> data/labels/
 prompt_path: example_multilabel_prompt.txt
 text_dir: example_multilabel_text
@@ -23,6 +23,7 @@ batch_size: 3
 max_retries: 1
 
 # Task policy
+validation_mode: true
 allow_multilabel: true  # or false
 
 # Optional helpers
@@ -31,4 +32,5 @@ include_explanation: false
 hallucination_check: false
 
 # If set, used as a canonical raw_output.jsonl for evaluation-only runs (no API calls).
-#canonical_raw_path: outputs/example_multilabel/results/run_2026-02-14T09-05-40/raw_output.jsonl
+# Only use this together with validation_mode: true.
+# canonical_raw_path: outputs/example_multilabel/results/run_2026-02-14T09-05-40/raw_output.jsonl

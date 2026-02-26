@@ -61,7 +61,7 @@ class PipelineConfig:
     # Inputs
     prompt_path: Path
     text_dir: Path
-    hand_coded_validation_path: Path
+    hand_coded_validation_path: Path | None
     labels_txt_path: Path
 
     # Labels
@@ -77,6 +77,7 @@ class PipelineConfig:
     max_retries: int
 
     # Task policy
+    validation_mode: bool
     allow_multilabel: bool
 
     # Optional helpers
@@ -131,6 +132,7 @@ class PipelineConfig:
             "model_role",
             "batch_size",
             "max_retries",
+            "validation_mode",
             "allow_multilabel",
             "include_evidence_lines",
             "include_explanation",
@@ -148,7 +150,6 @@ class PipelineConfig:
             "project_name",
             "prompt_path",
             "text_dir",
-            "hand_coded_validation_path",
             "labels_txt_path",
             "llm",
             "batch_size",
@@ -169,12 +170,22 @@ class PipelineConfig:
 
         prompt_path = _resolve_path(raw["prompt_path"], base_dir=data_root / "prompts", repo_root=repo_root)
         text_dir = _resolve_path(raw["text_dir"], base_dir=data_root / "text", repo_root=repo_root)
-        hand_coded_validation_path = _resolve_path(
-            raw["hand_coded_validation_path"],
-            base_dir=data_root / "validation",
-            repo_root=repo_root,
-        )
         labels_txt_path = _resolve_path(raw["labels_txt_path"], base_dir=data_root / "labels", repo_root=repo_root)
+
+        validation_mode = bool(raw.get("validation_mode", True))
+        if validation_mode and "hand_coded_validation_path" not in raw:
+            raise ValueError("hand_coded_validation_path is required when validation_mode is true")
+
+        hand_coded_validation_raw = raw.get("hand_coded_validation_path")
+        hand_coded_validation_path = (
+            _resolve_path(
+                hand_coded_validation_raw,
+                base_dir=data_root / "validation",
+                repo_root=repo_root,
+            )
+            if hand_coded_validation_raw
+            else None
+        )
 
         labels = PipelineConfig._load_labels_txt(labels_txt_path)
 
@@ -206,6 +217,12 @@ class PipelineConfig:
             _resolve_path(canonical_raw, base_dir=repo_root, repo_root=repo_root) if canonical_raw else None
         )
 
+        if not validation_mode and canonical_raw_path is not None:
+            raise ValueError("canonical_raw_path cannot be used when validation_mode is false")
+
+        if not validation_mode and hallucination_check:
+            raise ValueError("hallucination_check cannot be enabled when validation_mode is false")
+
         return PipelineConfig(
             project_name=project_name,
             logs_dir=logs_dir,
@@ -220,6 +237,7 @@ class PipelineConfig:
             model_role=str(raw.get("model_role", "")),
             batch_size=batch_size,
             max_retries=max_retries,
+            validation_mode=validation_mode,
             allow_multilabel=allow_multilabel,
             include_evidence_lines=include_evidence_lines,
             include_explanation=include_explanation,

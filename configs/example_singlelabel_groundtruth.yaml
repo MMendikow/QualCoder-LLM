@@ -6,7 +6,7 @@ project_name: example_singlelabel_groundtruth
 # Inputs (relative paths default under data/)
 # prompt_path -> data/prompts/
 # text_dir -> data/text/
-# hand_coded_validation_path -> data/validation/
+# hand_coded_validation_path -> data/validation/   (required when validation_mode: true)
 # labels_txt_path -> data/labels/
 prompt_path: example_singlelabel_prompt.txt
 text_dir: example_singlelabel_text
@@ -24,6 +24,7 @@ batch_size: 3
 max_retries: 1
 
 # Task policy
+validation_mode: true
 allow_multilabel: false  # or true
 
 # Optional helpers
@@ -32,4 +33,5 @@ include_explanation: false
 hallucination_check: false
 
 # If set, used as a canonical raw_output.jsonl for evaluation-only runs (no API calls).
+# Only use this together with validation_mode: true.
 # canonical_raw_path: outputs/example_singlelabel/results/run_YYYY-MM-DDTHH-MM-SS/raw_output.jsonl
