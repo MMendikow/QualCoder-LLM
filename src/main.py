@@ -319,7 +319,7 @@ def _write_llm_classification_csv(
     llm_csv_path = run_dir / "LLM_classification.csv"
 
     if predictions:
-        llm_series = build_llm_coder(pd.DataFrame(predictions), labels)
+        llm_series = build_llm_coder(predictions, labels)
         llm_df = llm_series.reset_index()
         llm_df.columns = ["id", "LLM"]
     else:
