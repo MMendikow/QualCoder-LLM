@@ -8,12 +8,12 @@ QualCoder-LLM is a **ready-to-use** pipeline for **LLM-assisted qualitative codi
 * **Automated evaluation**, including:
   * **Ground-truth evaluation** against an expert-labeled validation dataset using standard classification metrics (e.g., accuracy and F1 variants).
   * **Intercoder reliability (ICR)** computing **Krippendorff’s α** treating the LLM as an additional coder alongside one or more human coders.
-* **Prediction-only mode**: run the pipeline without validation data to generate LLM classifications only, with no evaluation, no logs, and no `run_history.csv` entry.
+* **Prediction-only mode**: run the pipeline without validation data to generate LLM classifications only.
 * **Experiment tracking via `run_history.csv`** for validation-enabled runs, which records key configuration settings and headline metrics—making it straightforward to compare prompts, models, label sets, and options over time.
 * Optional **evidence lines** (verbatim quotes from the source text supporting the assigned label(s)) with a **hallucination audit** that flags evidence lines that differ from the original input text.
-* **Robust execution with configurable retries**: single failed LLM coding calls are retried up to a user-defined limit, while successful calls are saved so completed work is never lost.
+* **Robust execution with configurable retries**: failed LLM API calls are retried up to a user-defined limit, and successful LLM predictions are saved incrementally so completed classification work is preserved even if transient connection errors occur.
 
-Everything is controlled via a **single flat YAML configuration file**.
+Everything is controlled via a **single YAML configuration file**.
 
 
 ## Table of contents
@@ -22,7 +22,7 @@ Everything is controlled via a **single flat YAML configuration file**.
 - [What the pipeline does](#what-the-pipeline-does)
 - [Requirements](#requirements)
 - [Installation](#installation)
-- [Quick start (included examples)](#quick-start-included-examples)
+- [Quick start (including examples)](#quick-start-including-examples)
 - [Preparing your inputs](#preparing-your-inputs)
 - [Validation file (CSV)](#4-validation-file-csv)
 - [Configuration (YAML)](#configuration-yaml)
@@ -40,12 +40,12 @@ Everything is controlled via a **single flat YAML configuration file**.
 ## Repository layout
 
 ```text
-configs/          # YAML configs 
+configs/          # YAML configs : your central configuration file 
 data/
-  prompts/        # prompt templates (.txt): instructions + codebook given to the LLM
-  text/           # text items (.json): the documents/excerpts to be coded
+  prompts/        # prompt templates (.txt): your instructions (codebook, examples,..) given to the LLM
+  text/           # text items (.json): your documents/excerpts to be coded
   labels/         # label sets (.txt): your label universe
-  validation/     # validation datasets (.csv): either ground-truth labels OR multi-rater coding
+  validation/     # validation datasets (.csv): your validation datasets
 outputs/          # auto-generated logs and results (grouped by project_name)
 src/              # pipeline source code
 .env              # your local environment variables (e.g., OPENAI_API_KEY);
@@ -63,13 +63,13 @@ At a high level, the pipeline has two execution paths.
 ### Validation mode enabled
 
 1. Load inputs
-   - label universe from a `.txt` file (list of the allowed labels for a task)
-   - prompt template from a `.txt` file (instruction for the LLM)
-   - text items from a directory of `.json` files (documents you want to classify)
-   - validation data from a `.csv` file (human coders results or expert classification)
+   - label universe from a `.txt` file (your list of the allowed labels for your task)
+   - prompt template from a `.txt` file (your instructions for the LLM)
+   - text items from a directory of `.json` files (the documents you want to classify)
+   - validation data from a `.csv` file (your human coders results or an expert classification)
 
 2. Call the LLM to code items (unless you run in evaluation-only mode)
-   - batching is controlled by `batch_size` (how many papers should be given at a single LLM call)
+   - batching is controlled by `batch_size` (how many documents should be given at a single LLM API call)
    - strict output format is enforced (JSON array with id and labels, to ensure safe interpretation of LLM coding results)
 
 3. Evaluate results
@@ -77,9 +77,9 @@ At a high level, the pipeline has two execution paths.
    - ICR mode otherwise (≥1 human rater columns)
 
 4. Write outputs
-   - per-run artifacts into `outputs/<project_name>/results/run_<timestamp>/...`
-   - a cumulative `run_history.csv` for cross-run comparison
-   - logs and computed metrics for the run
+   - per-run output documents into `outputs/<project_name>/results/run_<timestamp>/...`
+   - a cumulative `run_history.csv` overview for cross-run comparison saving metrics and configurations
+   - detailed logs including computed metrics for each run
 
 ### Validation mode disabled
 
@@ -134,7 +134,7 @@ OPENAI_API_KEY=your_openai_api_key_here
 
 ---
 
-## Quick start (included examples)
+## Quick start (including examples)
 
 This repository already includes two example YAML configs in `configs/`:
 
@@ -166,7 +166,7 @@ This section is intentionally detailed: most runtime errors come from small inpu
 File: `data/labels/<your_labels>.txt`  
 Format: one label per line (exact spelling is important)
 
-Example:
+Example labels:
 
 ```text id="u2w9dx"
 economic_strain
@@ -184,10 +184,11 @@ Rules enforced by the pipeline:
 ### 2) Prompt template
 
 File: `data/prompts/<your_prompt>.txt`  
-Format: Plain-English instructions plus an optional codebook.
+Format: Plain-English instructions.
 
-A practical prompt could include:
+A practical prompt could include for example:
 
+- a codebook
 - a concise definition of the task
 - inclusion/exclusion criteria per label
 - guidance for ambiguous cases
@@ -238,7 +239,7 @@ Examples (placeholders only; copy the structure, not the placeholder content):
   [{"id":"<ID_1_FROM_BATCH>","labels":["<ALLOWED_LABEL>"]},{"id":"<ID_2_FROM_BATCH>","labels":["<ALLOWED_LABEL>"]}]
 ```
 
-Finally, the pipeline appends the INPUT payload as a JSON array of items. Each item includes id, and either text or seperated sections (so it may include title ecetera if present in your project).
+Finally, the pipeline appends the INPUT payload as a JSON array of items. Each item includes id, and either text or separated sections (so it may include title ecetera if present in your project items).
 
 ### 3) Text items (JSON)
 
@@ -381,17 +382,17 @@ The pipeline is configured through a single YAML file with a strict schema (only
 ### Required keys
 
 - `project_name`
-  Name of the run group; outputs are written under `outputs/<project_name>/{logs,results}`.
+  Name of your project; outputs are written under `outputs/<project_name>/{logs,results}`.
 
 **Inputs**
 - `prompt_path`
-  Path to the prompt template (.txt). If given as a simple relative filename, it is resolved under `data/prompts/`.
+  Path to/Name of your prompt template (.txt). If given as a simple relative filename, it is resolved under `data/prompts/`.
 - `text_dir`
-  Directory containing input items (.json files). If relative, it is resolved under `data/text/`.
+  Path to/Name of your Directory containing input items (.json files). If relative, it is resolved under `data/text/`.
 - `labels_txt_path`
-  Label universe file (.txt, one label per line). If relative, it is resolved under `data/labels/`.
+  Path to/Name of your label universe file (.txt, one label per line). If relative, it is resolved under `data/labels/`.
 - `hand_coded_validation_path`
-  Validation CSV path (ground-truth or rater-style). If relative, it is resolved under `data/validation/`. Required when `validation_mode: true`; optional otherwise.
+  Path to/Name of your Validation file (.csv, ground-truth or rater-style). If relative, it is resolved under `data/validation/`. Required when `validation_mode: true`; optional otherwise.
 
 **Model / runtime**
 - `llm`
@@ -399,7 +400,7 @@ The pipeline is configured through a single YAML file with a strict schema (only
 - `batch_size`
   Number of items included in a single LLM call.
 - `max_retries`
-  Maximum number of retries for a failed batch call (robust execution).
+  Maximum number of retries for a failed LLM API call (robust execution).
 
 **Task policy**
 - `validation_mode`
@@ -419,10 +420,10 @@ The pipeline is configured through a single YAML file with a strict schema (only
   Requests a brief explanation field in the model output.
 - `hallucination_check` (default: false)
   Runs an evidence-line audit that flags quoted evidence not found in the original text. This option is supported only when `validation_mode: true`.
-- `canonical_raw_path` (default: null)
-  Evaluation-only mode: skips LLM calls and instead reads predictions from an existing canonical JSONL file (typically a previous run’s raw_output.jsonl). This option is supported only when `validation_mode: true`.
+- `canonical_raw_path` (default: commented out)
+  Evaluation-only mode: skips LLM calls and instead reads predictions from an existing final JSONL file (typically a previous run’s raw_output.jsonl). This option is supported only when `validation_mode: true`.
 
-Example config:
+Example for a config YAML:
 
 ```yaml id="5y2aed"
 project_name: my_run
@@ -487,7 +488,7 @@ hallucination_check: false
 
 ## Path resolution
 
-If you use relative paths, they default to:
+If you use relative paths in the config file, they default to:
 - `prompt_path` → `data/prompts/`
 - `text_dir` → `data/text/`
 - `hand_coded_validation_path` → `data/validation/`
@@ -529,15 +530,13 @@ Each run writes to:
 
 Typical files include:
 
-- **`raw_output.jsonl`** — canonical predictions (JSONL; one JSON object per line), e.g.
+- **`raw_output.jsonl`** — final predictions (JSONL; one JSON object per line), e.g.
   `{"id":"001","labels":["economic_strain"]}`
   If enabled, items may additionally include:
   - `evidence_lines: [...]`
   - `explanation: "..."`
 
-- **`LLM_classification.csv`** — one row per item with the columns:
-  - `id`
-  - `LLM`
+- **`LLM_classification.csv`** — one row per item with the corresponding LLM predictions.
 
 - **`raw_input.txt`** — the exact prompt text sent to the model *per batch*, including your prompt template, the appended JSON contract, and the batch payload. This is the primary audit/debug artifact.
 
@@ -570,8 +569,8 @@ The overview enabled by Run History enables a practical “experiment loop”:
 
 Outputs are limited to:
 
-- **`raw_output.jsonl`** — canonical predictions (JSONL; one JSON object per line)
-- **`LLM_classification.csv`** — one row per item with columns `id` and `LLM`
+- **`raw_output.jsonl`** — final predictions (JSONL; one JSON object per line)
+- **`LLM_classification.csv`** — one row per item with the corresponding LLM predictions.
 
 No logs, no metrics, no crosstab, no hallucination audit, and no `run_history.csv` row are written in prediction-only mode.
 
@@ -629,9 +628,7 @@ python run.py configs/<your_config>.yaml
 ```
 
 The pipeline reads `raw_output.jsonl` and re-evaluates it. This is useful for:
-- changing the validation CSV
-- re-running ICR calculations
-- re-computing metrics after modifying the label universe
+- re-computing metrics after modifying the validation file ecetera
 - regenerating artifacts like the single-label crosstab
 
 ### Prediction-only mode
@@ -751,7 +748,7 @@ Interpretation:
 
 #### 1) Atomic nominal α (exact set token match)
 
-Each coder’s label set is converted into a canonical token:
+Each coder’s label set is converted into a final token:
 
 - sort unique labels
 - join with `|`
