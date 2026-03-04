@@ -2,7 +2,7 @@
   <img alt="QualCoder-LLM: LLM-assisted qualitative coding" src="assets/qualcoder_banner.svg" width="900" />
 </p>
 
-QualCoder-LLM is a **ready-to-use** pipeline for **LLM-assisted qualitative coding** of text documents. It supports:
+QualCoder-LLM is a **ready-to-use** pipeline for **LLM-assisted qualitative coding** of text documents, implementing and automating the workflow described in [_Reproducible LLM workflows for qualitative coding and text classification: A Four-Case Framework for Systematic Literature Reviews_](PAPER_LINK). If you use or build on this repository in your work, please cite [our paper](CITATION_LINK); for questions, contact [EMAIL](mailto:EMAIL). It supports:
 
 * **Single-label** and **multi-label** coding.
 * **Automated evaluation**, including:
