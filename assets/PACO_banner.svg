@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="QualCoder-LLM banner">
+<svg width="1200" height="300" viewBox="0 0 1200 300" fill="none" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="PACO banner">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1200" y2="300" gradientUnits="userSpaceOnUse">
       <stop offset="0" stop-color="#0B1020"/>
@@ -46,12 +46,12 @@
     <!-- Left text block -->
     <g transform="translate(80 78)">
       <text x="0" y="0" fill="#EAF0FF" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, 'Apple Color Emoji','Segoe UI Emoji'"
-            font-size="54" font-weight="800" letter-spacing="-0.7">
-        QualCoder-LLM
+            font-size="64" font-weight="800" letter-spacing="-0.7">
+        PACO
       </text>
       <text x="2" y="46" fill="#B8C3E6" font-family="ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial"
             font-size="20" font-weight="500" opacity="0.95">
-        LLM-assisted qualitative coding of text
+        Pipeline for AI-Assisted Qualitative Coding
       </text>
 
       <!-- Pill tags -->
